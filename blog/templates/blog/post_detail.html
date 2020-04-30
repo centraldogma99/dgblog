@@ -1,13 +1,32 @@
 {% extends 'blog/base.html' %}
 
 {% block content %}
+	<script>
+		/*
+		const $button = document.querySelector('#button');
+    	const $form = document.querySelector('#form');
+		$button.addEventListener('click', () => {
+        	$form.style.display = 'block';
+    	});
+*/
+		var handleClick = function(evt) {
+			evt.target.parentNode.parentNode.childNodes[3].style.display = 'block';
+    	} ;
+		
+		window.onload = function(){
+			$(".replybtn").bind('click', $.proxy(handleClick, this));
+		};
+	</script>
+
 	{% if messages %}
 		{% for message in messages %}
 			<script>alert("{{ message.message }}")</script>
 		{% endfor %}
 	{% endif %}
+
     <div class="post">
-        {% if post.published_date %}
+        {% if user.is_authenticated %}
+			{% if post.published_date %}
             <div class="date">
                 {{ post.published_date }}
             </div>
@@ -15,11 +34,64 @@
 		{% else %}
 			<a class="btn btn-default" href="{% url 'post_publish' pk=post.pk %}">Publish</a>
         {% endif %}
-        {% if user.is_authenticated %}
      		<a class="btn btn-default" href="{% url 'post_edit' pk=post.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
 			<a class="btn btn-default" href="{% url 'post_delete' pk=post.pk %}"><span class="glyphicon glyphicon-remove"></span></a>
 		{% endif %}
         <h1>{{ post.title }}</h1>
         <p>{{ post.text|linebreaksbr }}</p>
     </div>
+	<hr>
+		
+	<script>
+		function WriteComment(){
+			var thef = document.getElementById("commentwin")
+			if (thef.style.display == "none"){
+				thef.style.display = "block"
+			} else {
+				thef.style.display = "none"
+			}
+		}
+	</script>
+	<a class="btn btn-default" href="javascript:WriteComment()">Write Comment</a>
+	<div id="commentBody"></div>
+	<form id="commentwin" name="writecomment" method="POST" action="{% url 'comment_write2' pk=post.pk %}" >
+		{% csrf_token %}
+		<p>
+			<label for="author">Username:</label>
+            <input type="text" name="author" required id="author">
+		</p>
+		<textarea name="text" required id="text" cols="100" rows="7"></textarea>
+		<button type="submit">Confirm</button>
+	</form>
+	
+{% for comment in post.comments.all %}
+	{% if comment.approved or user.is_authenticated %}
+		<div class="biggerclass">
+		<div class="comment">
+			<div class="date">{{ comment.created_date }}</div>
+			{% if not comment.approved %}
+				<a class="btn btn-default" href="{% url 'comment_remove' commentpk=comment.pk %}"><span class="glyphicon glyphicon-remove"></span></a>
+                <a class="btn btn-default" href="{% url 'comment_approve' commentpk=comment.pk %}"><span class="glyphicon glyphicon-ok"></span></a>
+			{% endif %}
+			<a class="btn btn-default replybtn" ><span class="glyphicon glyphicon-reply"></span></a>
+			<strong>{{ comment.author }}</strong>
+			<p>{{ comment.text|linebreaks }}</p>
+		</div>
+		<form id="commentwin" name="writecomment" method="POST" action="{% url 'comment_write2' pk=post.pk parent=comment.pk %}" style="display:none">
+			{% csrf_token %}
+			<p>
+				<label for="author">Username:</label>
+        		<input type="text" name="author" required id="author">
+			</p>
+			<textarea name="text" required id="text" cols="100" rows="7"></textarea>
+			<button type="submit">Confirm</button>
+		</form>
+		</div>
+	{% endif %}
+	
+{% empty %}
+    <p>No comments here yet :(</p>
+{% endfor %}
+
+
 {% endblock %}
