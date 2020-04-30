@@ -1,6 +1,7 @@
 {% extends 'blog/base.html' %}
 
 {% block content %}
+{% load mptt_tags %}
 	<script>
 		/*
 		const $button = document.querySelector('#button');
@@ -64,20 +65,22 @@
 		<button type="submit">Confirm</button>
 	</form>
 	
-{% for comment in post.comments.all %}
-	{% if comment.approved or user.is_authenticated %}
+<ul id="bigul">
+{% recursetree post.comments.all %}
+	{% if node.approved or user.is_authenticated %}
+	<li>
 		<div class="biggerclass">
 		<div class="comment">
-			<div class="date">{{ comment.created_date }}</div>
-			{% if not comment.approved %}
-				<a class="btn btn-default" href="{% url 'comment_remove' commentpk=comment.pk %}"><span class="glyphicon glyphicon-remove"></span></a>
-                <a class="btn btn-default" href="{% url 'comment_approve' commentpk=comment.pk %}"><span class="glyphicon glyphicon-ok"></span></a>
+			<div class="date">{{ node.created_date }}</div>
+			{% if not node.approved %}
+				<a class="btn btn-default" href="{% url 'comment_remove' commentpk=node.pk %}"><span class="glyphicon glyphicon-remove"></span></a>
+                <a class="btn btn-default" href="{% url 'comment_approve' commentpk=node.pk %}"><span class="glyphicon glyphicon-ok"></span></a>
 			{% endif %}
-			<a class="btn btn-default replybtn" ><span class="glyphicon glyphicon-reply"></span></a>
-			<strong>{{ comment.author }}</strong>
-			<p>{{ comment.text|linebreaks }}</p>
+			<strong>{{ node.author }}</strong>
+			<a class="btn btn-default replybtn" ><span class="glyphicon glyphicon-arrow-down"></span></a>
+			<p>{{ node.text|linebreaks }}</p>
 		</div>
-		<form id="commentwin" name="writecomment" method="POST" action="{% url 'comment_write2' pk=post.pk parent=comment.pk %}" style="display:none">
+		<form id="commentwin" name="writecomment" method="POST" action="{% url 'comment_write2' pk=post.pk parent=node.pk %}" style="display:none">
 			{% csrf_token %}
 			<p>
 				<label for="author">Username:</label>
@@ -87,11 +90,17 @@
 			<button type="submit">Confirm</button>
 		</form>
 		</div>
+		{% if not node.is_leaf_node %}
+			<ul class="children">
+				{{ children }}
+			</ul>
+		{% endif %}
+	</li>
 	{% endif %}
+{% endrecursetree %}
 	
-{% empty %}
-    <p>No comments here yet :(</p>
-{% endfor %}
+
+
 
 
 {% endblock %}
