@@ -1,9 +1,12 @@
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post, Comment
 from django.utils import timezone
 from .forms import PostForm, SignupForm, CommentForm
+from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods, require_POST
 from django.contrib.auth.models import User
 
 
@@ -74,6 +77,17 @@ def post_delete(request, pk):
     post.delete()
     return redirect("post_list")
 
+
+@require_POST
+def post_like(request):
+    pk = request.POST.get('pk',None)
+    post = get_object_or_404(Post, pk=pk)
+    post.post_like()
+    message = "successful"
+    context = {'like_count': post.likes,
+               'message': message }
+    return HttpResponse(json.dumps(context), content_type="application/json")
+    
 
 def signup(request):
     if request.method == "POST":

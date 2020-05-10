@@ -12,6 +12,7 @@ class Post(models.Model):
     text = models.TextField()
     created_date = models.DateTimeField(default=timezone.now)
     published_date = models.DateTimeField(blank=True, null=True)
+    likes = models.IntegerField(default=0)
     
     def publish(self):
         self.published_date = timezone.now()
@@ -19,6 +20,10 @@ class Post(models.Model):
         
     def unpublish(self):
         self.published_date = None
+        self.save()
+        
+    def post_like(self):
+        self.likes += 1
         self.save()
     
     def __str__(self):
